@@ -4,8 +4,10 @@ import matplotlib.pyplot as plt
 def double2array(data):
     return np.array(list(data))
 
-def analyse_MTF(System,ZOSAPI,angles):
+def analyse_MTF(System,ZOSAPI,max_freq):
     mtf = System.Analyses.New_Analysis(ZOSAPI.Analysis.AnalysisIDM.FftMtf);
+    mtf.Settings.MaximumFrequency = max_freq
+
     mtf.ApplyAndWaitForCompletion()
 
     mtf_res = mtf.GetResults()
@@ -28,6 +30,10 @@ def analyse_MTF(System,ZOSAPI,angles):
         plt.plot(xdat,ytan,xdat,ysag)
         leg.append(str(angles[i]) + types[0])
         leg.append(str(angles[i]) + types[1])
+    
     plt.legend((leg))
     plt.xlabel('Spatial Freq');
     plt.ylabel('Modulation');
+    
+    mtf_res.Disconnect()
+    mtf.Close()
