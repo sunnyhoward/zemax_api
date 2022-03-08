@@ -34,6 +34,9 @@ def analyse_MTF(System,ZOSAPI,max_freq):
     plt.legend((leg))
     plt.xlabel('Spatial Freq');
     plt.ylabel('Modulation');
+
+    plt.xlim(0,max_freq)
+    plt.ylim(-0.05,1.05)
     
     mtf_res.Disconnect()
     mtf.Close()
