@@ -40,3 +40,8 @@ def analyse_MTF(System,ZOSAPI,max_freq):
     
     mtf_res.Disconnect()
     mtf.Close()
+
+def calculate_grad(Y,X):
+    #take vectors of length 2, and approximate dY/dX
+    return (Y[1] - Y[0])/(X[1] - X[0])
+
