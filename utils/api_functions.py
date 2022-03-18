@@ -43,6 +43,9 @@ def set_parameter(LDE,set_array):
     Column 2 = Thickness in object units
     '''
 
+    if len(set_array.shape) == 1: #in this case they are just changing one param.
+        set_array = set_array.reshape((1,3))
+
     if set_array.shape[1] != 3:
         raise ValueError('Format must be: Column 0 = Element number, Column 1 = Radius, Column 2 = Thickness')
     
@@ -58,6 +61,44 @@ def set_parameter(LDE,set_array):
     
     return
 
+
+def make_variable(LDE,var_array):
+    '''
+    Here you will give an array of all the parameters to be changed. 
+    if it is 0, make it fixed;
+    if it is 1, make it variable.
+    
+    Column 0 = Element number (starts at index 0)
+    Column 1 = Change Radius? 
+    Column 2 = Change Thickness?
+    '''
+    
+    if len(var_array.shape) == 1: #in this case they are just changing one param.
+        var_array = var_array.reshape((1,3))
+
+    if var_array.shape[1] != 3:
+        raise ValueError('Format must be: Column 0 = Element number, Column 1 = Radius, Column 2 = Thickness')
+    
+
+
+
+    for i in range(len(var_array)):
+        obj = LDE.GetSurfaceAt(var_array[i,0])  #this step takes no time.
+
+        if var_array[i,1] == 1:
+            obj.RadiusCell.MakeSolveVariable()
+        
+        elif var_array[i,1] == 0:
+            obj.RadiusCell.MakeSolveFixed()
+
+
+        if var_array[i,2] == 1:
+            obj.ThicknessCell.MakeSolveVariable()
+        
+        elif var_array[i,2] == 0:
+            obj.RadiusCell.MakeSolveFixed()
+    
+    return
 
 
 def calc_merit(MFE):
