@@ -18,6 +18,20 @@ def double2array(data):
     '''
     return np.array(list(data))
 
+def get_parameter(LDE):
+    '''Returns thicknesses and Radii for all surfaces in separated arrays'''
+
+    thicknesses = []
+    radii = []
+    for i in np.arange(LDE.NumberOfSurfaces):
+
+        obj = LDE.GetSurfaceAt(i)
+        thicknesses.append(obj.Thickness)
+        radii.append(obj.Radius)
+    #return thicknesses, radii
+    return np.array(thicknesses), np.array(radii)
+
+
 
 def set_parameter(LDE,set_array):
     '''
@@ -82,7 +96,6 @@ def local_optimisation(TheSystem, ZOSAPI, algorithm = 'DLS', cycles = 'automatic
         raise ValueError('If not a standard value, instead use local_optimization_n_cycles') 
     
     LocalOpt = TheSystem.Tools.OpenLocalOptimization()
-    
     if algorithm == 'DLS':
         LocalOpt.Algorithm = ZOSAPI.Tools.Optimization.OptimizationAlgorithm.DampedLeastSquares
     elif algorithm == 'OD':
@@ -98,7 +111,7 @@ def local_optimisation(TheSystem, ZOSAPI, algorithm = 'DLS', cycles = 'automatic
     elif cycles == 5:
         LocalOpt.Cycles = ZOSAPI.Tools.Optimization.OptimizationCycles.Fixed_5_Cycles
     elif cycles == 1:
-        LocalOpt.Cycles = ZOSAPI.Tools.Optimization.OptimizationCycles.Fixed_1_Cycles
+        LocalOpt.Cycles = ZOSAPI.Tools.Optimization.OptimizationCycles.Fixed_1_Cycle
     
     LocalOpt.NumberOfCores = cores
     LocalOpt.RunAndWaitForCompletion()
@@ -106,9 +119,23 @@ def local_optimisation(TheSystem, ZOSAPI, algorithm = 'DLS', cycles = 'automatic
 
     return
 
+def local_optimisation_n_single_cycles(TheSystem, ZOSAPI, algorithm = 'DLS', cycles = 10, cores = 8):
+    """Allows to extract the samplings points during optimization"""
+
+    merit_values = np.zeros(cycles)
+    
+    thickness_values = np.zeros((cycles, TheSystem.LDE.NumberOfSurfaces))
+    radius_values = np.zeros((cycles, TheSystem.LDE.NumberOfSurfaces))
+
+    for i in np.arange(cycles):
+        local_optimisation(TheSystem, ZOSAPI,algorithm,1,cores)
+        thickness_values[i,:], radius_values[i,:] = get_parameter(TheSystem.LDE)
+        merit_values[i] = calc_merit(TheSystem.MFE)
+
+    return thickness_values, radius_values, merit_values
 
 def local_optimisation_n_cycles(TheSystem, ZOSAPI, algorithm = 'DLS', cycles = 50, cores = 8):
-     
+
     # There seems to be a bug right now where optics studio just crashes.
 
     num_50s = cycles // 50 
@@ -121,3 +148,22 @@ def local_optimisation_n_cycles(TheSystem, ZOSAPI, algorithm = 'DLS', cycles = 5
         local_optimisation(TheSystem, ZOSAPI,algorithm,10,cores)
     
     return
+
+def get_variable_status(LDE):
+    """Gets two arrays with True/ False flags whether a thickness/radius parameter is a variable in ZOS or not."""
+    thickness_var = []
+    radius_var = []
+
+    for i in np.arange(LDE.NumberOfSurfaces-1):
+        variable_lens = LDE.GetSurfaceAt(i)
+
+        if variable_lens.RadiusCell.Solve == 2:
+            radius_var.append(True)
+        else:
+            radius_var.append(False)
+        
+        if variable_lens.ThicknessCell.Solve == 2:
+            thickness_var.append(True)
+        else:
+            thickness_var.append(False)  
+    return radius_var, thickness_var 
