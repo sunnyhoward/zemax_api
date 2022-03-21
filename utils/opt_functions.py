@@ -7,7 +7,9 @@ import matplotlib.pyplot as plt
 
 from scipy.optimize import dual_annealing
 from pymoo.algorithms.moo.nsga2 import NSGA2
+from pymoo.algorithms.moo.nsga3 import NSGA3
 from pymoo.core.problem import ElementwiseProblem
+from pymoo.factory import get_reference_directions
 from pymoo.optimize import minimize
 
 import os 
@@ -87,18 +89,25 @@ class ZOSOptimisationproblem(ElementwiseProblem):
         out["F"] = optimisable_merit_function(x, radius_var_status=self.radius_var_status, thickness_var_status=self.thickness_var_status, LDE= self.LDE, MFE= self.MFE)
 
 
-def opt_nsga2(radius_var_status, thickness_var_status, LDE, MFE):
+def opt_nsga(radius_var_status, thickness_var_status, LDE, MFE, algo = "NSGA2"):
     """(Should) run a NSGA2 Optimization algorithm, not tested yet"""
     n_var = np.count_nonzero(radius_var_status) + np.count_nonzero(thickness_var_status)
     problem = ZOSOptimisationproblem(n_var, radius_var_status, thickness_var_status, LDE, MFE)
 
-    algorithm = NSGA2(pop_size=100)
+    if algo == "NSGA2":
+        algorithm = NSGA2(pop_size=100)
+    elif algo == "NSGA3":
+        ref_dirs = get_reference_directions("das-dennis", 1, n_partitions=12)
+        algorithm = NSGA3(pop_size=100, ref_dirs = ref_dirs)
+    else:
+        raise ValueError("Select either 'NSGA2' or 'NSGA3'")
+
 
     res = minimize(problem,
                 algorithm,
                 ('n_gen', 200),
                 seed=1,
                 verbose=False)
-    dummy = optimisable_merit_function(res.x, radius_var_status, thickness_var_status, LDE, MFE)
+    dummy = optimisable_merit_function(res.X, radius_var_status, thickness_var_status, LDE, MFE)
     return res
 
