@@ -69,7 +69,7 @@ def optimisable_merit_function(x, radius_var_status, thickness_var_status, LDE, 
 
 
 def opt_annealing(radius_var_status, thickness_var_status, LDE, MFE, steps = 100):
-    """starts a dual annealing optimization and sets the lens parameters to the found optimum"""
+    """Starts a dual annealing optimization and sets the lens parameters to the found optimum"""
     n_var = np.count_nonzero(radius_var_status) + np.count_nonzero(thickness_var_status)
     lw = [0] * n_var
     up = [1] * n_var
@@ -90,7 +90,7 @@ class ZOSOptimisationproblem(ElementwiseProblem):
 
 
 def opt_nsga(radius_var_status, thickness_var_status, LDE, MFE, algo = "NSGA2"):
-    """(Should) run a NSGA2 Optimization algorithm, not tested yet"""
+    """Starts a NSGA2/3 Optimization algorithm and sets the lens parameters to the found optimum"""
     n_var = np.count_nonzero(radius_var_status) + np.count_nonzero(thickness_var_status)
     problem = ZOSOptimisationproblem(n_var, radius_var_status, thickness_var_status, LDE, MFE)
 
