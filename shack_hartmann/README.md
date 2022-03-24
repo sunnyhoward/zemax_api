@@ -1,0 +1,1 @@
+Annoyingly none of our propagators are working so im resorting to trying to generate the shack hartmann simulation data in Zemax. I will attempt to add a wavefront to a beam before passing it through a microlens array.
