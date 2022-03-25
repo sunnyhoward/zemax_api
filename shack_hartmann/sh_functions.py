@@ -65,9 +65,11 @@ def get_wavefront(ZOSAPI,TheSystem,Nx):
     MyWavefrontMap = TheSystem.Analyses.New_Analysis(ZOSAPI.Analysis.AnalysisIDM.WavefrontMap)
 
     MyWavefrontMapSettings = MyWavefrontMap.GetSettings()
+    
 
-    # MyWavefrontMapSettings.Surface = 
-    MyWavefrontMapSettings.set_Sampling(6)
+    a = np.log2(Nx) - 4
+
+    MyWavefrontMapSettings.set_Sampling(a)
     MyWavefrontMap.ApplyAndWaitForCompletion()
     MyWavefrontMapResults = MyWavefrontMap.GetResults()
 
