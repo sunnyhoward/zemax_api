@@ -182,10 +182,10 @@ def local_optimisation_n_cycles(TheSystem, ZOSAPI, algorithm = 'DLS', cycles = 5
     num_50s = cycles // 50 
     rest = (cycles % 50)/10 #currently should work for multiples of 10
 
-    for i in range(num_50s):
+    for i in range(int(num_50s)):
         local_optimisation(TheSystem, ZOSAPI,algorithm,50,cores)
     
-    for i in range(rest):
+    for i in range(int(rest)):
         local_optimisation(TheSystem, ZOSAPI,algorithm,10,cores)
     
     return

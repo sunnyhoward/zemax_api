@@ -34,7 +34,7 @@ def set_zernikes(ZOSAPI, zernike_surf, n_zernikes, zernike_coeffs):
         bla = eval(annoyingstring+str(i + zero)+')') 
         bla.set_DoubleValue(zernike_coeffs[i])
 
-def get_spots(ZOSAPI,TheSystem,Nx):
+def get_spots(ZOSAPI,TheSystem,Nx,rays,imagesize,fieldsize):
     '''
     generate spot pattern
     '''
@@ -43,9 +43,11 @@ def get_spots(ZOSAPI,TheSystem,Nx):
 
     gia.GetSettings().set_ShowAs(1)
     gia.GetSettings().set_NumberOfPixels(Nx)
-    gia.GetSettings().set_ImageSize(7)
+    gia.GetSettings().set_ImageSize(imagesize) #allows for 46 dots
+    gia.GetSettings().set_FieldSize(fieldsize) #honestly i dunno what this does but to allow to match experimental
     gia.GetSettings().set_TotalWatts(10)
-
+    gia.GetSettings().set_RaysX1000(rays)
+    gia.GetSettings().UsePixelInterpolation=True
     gia.ApplyAndWaitForCompletion()
 
     gia_results = gia.GetResults()
