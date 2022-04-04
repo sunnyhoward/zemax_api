@@ -8,6 +8,27 @@ import tensorflow.keras as keras
 import matplotlib.pyplot as plt
 # sys.path.append(path)
 
+def find_max_min(h5):
+    '''
+    Need this so i can normalize properly. Basically loop through dataset and keep running totals of max and min.
+    '''
+    print('for large datasets this can take ~10mins')
+     
+    max_,min_ = 0,0
+    
+    #in sections of 1000, loop through.
+    all = len(h5['spots'])
+    
+    for i in range(int(all/1000)):
+        sub_max = np.max(h5['spots'][i*1000:(i+1)*1000])
+        sub_min = np.min(h5['spots'][i*1000:(i+1)*1000])
+
+        if sub_max > max_:
+            max_ = sub_max
+        if sub_min < min_:
+            min_ = sub_min
+    print((max_,min_))
+    return [max_,min_]
 
 
 def import_h5(filename,selection):
@@ -42,14 +63,14 @@ def pred_to_phasemap(zernikes, N):
 class DataGenerator(keras.utils.Sequence):
     'Generates data for Keras'
     def __init__(self, list_IDs, hf_file, batch_size=32, 
-                 shuffle=True):
+                 shuffle=True,maxmin=[0,0]):
         'Initialization'
         self.batch_size = batch_size
         self.list_IDs = list_IDs
         self.shuffle = shuffle
         self.on_epoch_end()
         self.hf = hf_file
-
+        self.maxmin = maxmin
 
     def __len__(self):
         'Denotes the number of batches per epoch'
@@ -78,10 +99,11 @@ class DataGenerator(keras.utils.Sequence):
         indexes = np.sort(indexes)
         act_indexes = self.list_IDs[indexes]
 
-        X = np.array(self.hf['LSI'][act_indexes])
+        X = np.array(self.hf['spots'][act_indexes])
         y = np.array(self.hf['zernikes'][act_indexes])
         
-        X = normalize_data(X) #(X-np.max(X,axis=(1,2))[:,None,None])/(np.max(X,axis=(1,2)) - np.min(X,axis=(1,2)))[:,None,None] #normalize data
+       # X[X>5] = 5 #to make more uniform
+        X = normalize_data(X,self.maxmin) #(X-np.max(X,axis=(1,2))[:,None,None])/(np.max(X,axis=(1,2)) - np.min(X,axis=(1,2)))[:,None,None] #normalize data
 
         return X, y
 
@@ -103,10 +125,10 @@ def plot_training(history, log=False, savefig = False, filename =None):
             raise ValueError('Specify filename')
         plt.savefig(filename,facecolor='w')
 
-def normalize_data(X):
-    return (X-np.min(X,axis=(1,2))[:,None,None])/(np.max(X,axis=(1,2)) - np.min(X,axis=(1,2)))[:,None,None] #normalize data
-
-
+def normalize_data(X,maxmin):
+    #return (X-np.min(X,axis=(1,2))[:,None,None])/(np.max(X,axis=(1,2)) - np.min(X,axis=(1,2)))[:,None,None] #normalize data
+    return (X-maxmin[1])/(maxmin[0] - maxmin[1]) #normalize data
+    
 def psnr(true,pred,mask):
     '''
     input: true - N_examples x Dim_0 x Dim_1

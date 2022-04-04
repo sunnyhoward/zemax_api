@@ -13,22 +13,24 @@ import matplotlib.pyplot as plt
 import matplotlib
 plt.switch_backend('agg')
 matplotlib.use('agg')
-from shack_hartmann.int_to_zern.Utils.models import Xception_regression, cnn, cnn_inceptionish, vgg, vgg_small, vgg_small_plus_larger_kernel
-from shack_hartmann.int_to_zern.Utils.functions import pred_to_phasemap, DataGenerator, plot_training, normalize_data
+from shack_hartmann.int_to_zern.Utils.models import Xception_regression, vgg, vgg_small
+from shack_hartmann.int_to_zern.Utils.functions import pred_to_phasemap, DataGenerator, plot_training, normalize_data,find_max_min
 import tensorflow as tf
 import h5py
 import shutil
 
 class LSI_model:
     
-    def __init__(self, hf, batch_size, model, lr = 0.0001):
+    def __init__(self, hf, batch_size, model, lr = 0.0001,maxmin = [0,0]):
         
         no_datapoints = len(hf['zernikes'])
         all_data = np.arange(no_datapoints)
-        self.partition = {'train': all_data[:int(0.6*no_datapoints)],
-                        'valid': all_data[int(0.6*no_datapoints):int(0.8*no_datapoints)],
-                        'test': all_data[int(0.8*no_datapoints):]}
-        
+        #self.partition = {'train': all_data[:int(0.6*no_datapoints)],
+        #                'valid': all_data[int(0.6*no_datapoints):int(0.8*no_datapoints)],
+        #                'test': all_data[int(0.8*no_datapoints):]}
+        self.partition = {'train': all_data[:int(0.8*no_datapoints)],
+                        'valid': all_data[int(0.8*no_datapoints):int(0.99*no_datapoints)],
+                        'test': all_data[int(0.99*no_datapoints):]}
         
 
         self.model = model
@@ -39,16 +41,16 @@ class LSI_model:
         
         self.callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
 
-        self.init_generators(hf=hf,batch_size = batch_size)
+        self.init_generators(hf=hf,batch_size = batch_size,maxmin =maxmin)
 
 
-    def init_generators(self,hf,batch_size):
+    def init_generators(self,hf,batch_size,maxmin =[0,0]):
         self.training_generator = DataGenerator(self.partition['train'], hf, batch_size=batch_size, 
-                        shuffle=False)
+                        shuffle=False,maxmin =maxmin)
         self.validation_generator = DataGenerator(self.partition['valid'], hf, batch_size=batch_size, 
-                        shuffle=False)
+                        shuffle=False,maxmin =maxmin)
         self.test_generator = DataGenerator(self.partition['test'], hf, batch_size=batch_size, 
-                        shuffle=False)
+                        shuffle=False,maxmin =maxmin)
 
 
     def train_model(self,epochs = 10):
@@ -59,17 +61,23 @@ class LSI_model:
 
 
 if __name__ == '__main__':
-
+    
+    print("Num GPUs:  ", len(tf.config.list_physical_devices('GPU')))
+    exists = True
     hf = h5py.File(path + "/shack_hartmann/zemax_sh_monster.h5", "r")
-    
-    model = vgg_small(data = np.array(hf['spots'][:2])[:,:,:,np.newaxis], labels = np.array(hf['zernikes'][:2]))
-    
-    batch_size = 16
+    if not exists:
+        model = vgg_small(data = np.array(hf['spots'][:2])[:,:,:,np.newaxis], labels = np.array(hf['zernikes'][:2]))
+    else:
+        model = tf.keras.models.load_model(path+'/shack_hartmann/int_to_zern/model_data/vgg_small.h5')
+
+    batch_size = 64
     lr = 0.0001
-    epochs = 10
+    epochs = 5
+
+    maxmin = find_max_min(hf) #first element is max, second is min
 
 
-    test = LSI_model(hf, batch_size=batch_size, model=model, lr = lr)
+    test = LSI_model(hf, batch_size=batch_size, model=model, lr = lr, maxmin = maxmin)
     
     new_dir = path+'/shack_hartmann/int_to_zern/model_data/'+model.name
     

@@ -25,7 +25,7 @@ def vgg(data,labels):
     x = layers.Conv2D(512, (3, 3), activation='relu',padding='same')(x)
     x=layers.MaxPooling2D((2, 2))(x)
     x=layers.Flatten()(x)
-    x=layers.Dropout(0.2)(x)
+    #x=layers.Dropout(0.2)(x)
     x=layers.Dense(1000, activation='relu')(x)
     x=layers.Dense(100, activation='relu')(x)
     x=layers.Dense(output_shape, activation='linear')(x)
@@ -57,9 +57,11 @@ def vgg_small(data,labels):
     x=layers.MaxPooling2D((2, 2))(x)
     x = layers.Conv2D(256, (3, 3), activation='relu',padding='same')(x)
     x=layers.MaxPooling2D((2, 2))(x)
-    
+    x = layers.Conv2D(256, (3, 3), activation='relu',padding='same')(x)
+    x=layers.MaxPooling2D((2, 2))(x)
+ 
     x=layers.Flatten()(x)
-    x=layers.Dropout(0.2)(x)
+#    x=layers.Dropout(0.2)(x)
     x=layers.Dense(1000, activation='relu')(x)
     x=layers.Dense(500, activation='relu')(x)
     x=layers.Dense(300, activation='relu')(x)
@@ -83,6 +85,7 @@ def Xception_regression(data,labels):
     
     upsample = layers.UpSampling3D(size=(1,1,3))(new_input)
     
+    #crop = layers.Conv2D(3, (2, 2), activation='relu',padding='same')(upsample) 
     #Xception MUST have 3 channels input or crashes. 
 
     model = Xception(weights=None, include_top=False, input_shape=(input_shape[0],input_shape[1], 3),input_tensor=upsample)
@@ -96,6 +99,7 @@ def Xception_regression(data,labels):
 
     #has 2048 channels, lets reduce to quarter this
     x = layers.Conv2D(512, (1, 1), activation='relu',padding='same')(x)
+    x = layers.Conv2D(128, (1, 1), activation='relu',padding='same')(x)
 
     #now output is approx 3000 elements
 
